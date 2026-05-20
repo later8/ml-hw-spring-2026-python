@@ -1,29 +1,35 @@
 import numpy as np
+from sklearn.neighbors import KNeighborsRegressor
 
 # allocate storage
 class KNNRegression:
     def __init__(self, n):
         self.n = n
-        self.x = np.zeros(n, dtype=float) # pre-sized array to enable vectorized operations
-        self.y = np.zeros(n, dtype=float)# pre-sized array to enable vectorized operations
-        self.count = 0 #counter
-
-    # add points
+        self.x = np.zeros(n, dtype=float)
+        self.y = np.zeros(n, dtype=float)
+        self.count = 0
+#add points
     def insert(self, x, y):
         self.x[self.count] = x
         self.y[self.count] = y
         self.count += 1
 
-    #actual knn regression function
+    # computes variance of all y values in the training set
+    def label_variance(self):
+        return np.var(self.y)
+
     def predict(self, x_query, k):
         if k > self.n:
             return None # exit if not enough neighbours
 
-        distances = np.abs(self.x - x_query) #calc distance
-        nearest_indices = np.argpartition(distances, k - 1)[:k] # pick indices of the k smallest distances
-        return np.mean(self.y[nearest_indices]) # average the y values of k neighours
+        #build and train the model
+        X_train = self.x.reshape(-1, 1) #reshape for sklearn
+        model = KNeighborsRegressor(n_neighbors=k) 
+        model.fit(X_train, self.y)
+        return model.predict(np.array([[x_query]]))[0] #query must be 2D
 
-# main function to get input from user
+
+#user interaction
 def main():
     n = int(input("Enter a positive integer N: "))
     k = int(input("Enter a positive integer k: "))
@@ -37,11 +43,12 @@ def main():
 
     x_query = float(input("Enter X: "))
 
+    print(model.label_variance())
+
     if k > n:
         print("Error: k must be less than or equal to N.")
     else:
-        result = model.predict(x_query, k)
-        print(result)
+        print(model.predict(x_query, k))
 
 
 if __name__ == "__main__":
